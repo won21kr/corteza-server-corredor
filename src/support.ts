@@ -11,22 +11,29 @@ import * as bundle from './bundler/webpack'
 import * as gRPCServer from './grpc-server'
 import path from 'path'
 import grpc from 'grpc'
+import TestRunner from './scripts/test-runner'
 
 interface WatchFn {
     (): void;
 }
 
-const watcherOpts = {
+interface WatcherOpts {
+  persistent?: boolean;
+  recursive?: boolean;
+  delay?: number;
+}
+
+const watcherOpts: WatcherOpts = {
   persistent: false,
   recursive: true,
   delay: 200,
-  filter: /\.js$/,
 }
 
 interface WatcherConfig {
   basedir: string;
   enabled: boolean;
   watch: boolean;
+  runTests: boolean;
 }
 
 export async function InstallDependencies (): Promise<deps.PackageInstallStatus[]> {
@@ -61,6 +68,10 @@ export async function ReloadServerScripts (svc: serverScripts.Service): Promise<
     .then((scripts: Script[]) => {
       const isValid = (s: Script): boolean => !!s.name && !!s.exec && s.errors.length === 0
       const vScripts = scripts.filter(isValid)
+
+      if (config.isDevelopment) {
+        TestRunner(vScripts)
+      }
 
       // Log errors on all invalid scripts
       scripts
@@ -115,6 +126,10 @@ export async function ReloadAndBundleClientScripts (svc: clientScripts.Service):
       const isValid = (s: Script): boolean => !!s.name && !!s.exec && s.errors.length === 0
       const vScripts = scripts.filter(isValid)
 
+      if (config.isDevelopment) {
+        TestRunner(vScripts)
+      }
+
       // Make bundles out of all valid scripts
       const scriptListPerBundle = vScripts.reduce((bi, s) => {
         // Split remaning path of the script
@@ -162,12 +177,21 @@ export async function ReloadAndBundleClientScripts (svc: clientScripts.Service):
     })
 }
 
-export function Watcher (callback: WatchFn, cfg: WatcherConfig, opts = watcherOpts): void {
+export function ScriptWatcher (callback: WatchFn, cfg: WatcherConfig, opts: WatcherOpts = {}): void {
+  let filter: RegExp
+  if (cfg.runTests) {
+    filter = /\.test\.js$/
+  } else {
+    filter = /\.js$/
+  }
+
+  opts = { ...watcherOpts, ...opts }
+
   if (!cfg.enabled || !cfg.watch) {
     return
   }
 
-  const watcher = watch(cfg.basedir, opts, debounce(() => callback(), 500))
+  const watcher = watch(cfg.basedir, { ...opts, filter }, debounce(() => callback(), 500))
   process.on('SIGINT', watcher.close)
 }
 

@@ -13,7 +13,7 @@ import {
   ProtobufDefinitions,
   ReloadAndBundleClientScripts,
   ReloadServerScripts,
-  Watcher,
+  ScriptWatcher,
 } from './support'
 
 /**
@@ -93,8 +93,14 @@ if (config.scripts.enabled) {
   }).then(() => {
     // Setup serve & client script watchers
     // that will reload server-side scripts
-    Watcher(() => ReloadServerScripts(serverScriptsService), config.scripts.server)
-    Watcher(() => ReloadAndBundleClientScripts(clientScriptsService), config.scripts.client)
+    ScriptWatcher(
+      () => ReloadServerScripts(serverScriptsService),
+      config.scripts.server,
+    )
+    ScriptWatcher(
+      () => ReloadAndBundleClientScripts(clientScriptsService),
+      config.scripts.client,
+    )
   })
 } else {
   logger.warn('running without enabled script services')

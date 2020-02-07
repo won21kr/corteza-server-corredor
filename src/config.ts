@@ -140,6 +140,7 @@ export const scripts = {
 
     enabled: isTrue(e.CORREDOR_SCRIPTS_SERVER_ENABLED) ?? true,
     watch: isTrue(e.CORREDOR_SCRIPTS_SERVER_WATCH) ?? true,
+    runTests: isDevelopment,
   },
 
   client: {
@@ -148,6 +149,7 @@ export const scripts = {
 
     enabled: isTrue(e.CORREDOR_SCRIPTS_CLIENT_ENABLED) ?? true,
     watch: isTrue(e.CORREDOR_SCRIPTS_CLIENT_WATCH) ?? true,
+    runTests: isDevelopment,
 
     bundleOutputPath: path.resolve(e.CORREDOR_SCRIPTS_CLIENT_BUNDLE_OUTPUT_PATH ?? '/tmp/corredor/client-scripts-dist'),
   },
